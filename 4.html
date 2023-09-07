@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shooting Star Effect</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Get the canvas element and WebGL context
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl');
+
+        // Set the canvas size to fill the entire window
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Create a shader program
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0, 1);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            void main() {
+                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        `;
+
+        function createShader(gl, sourceCode, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, sourceCode);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, vertexShaderSource, gl.VERTEX_SHADER);
+        const fragmentShader = createShader(gl, fragmentShaderSource, gl.FRAGMENT_SHADER);
+
+        if (!vertexShader || !fragmentShader) {
+            throw new Error('Failed to create shaders.');
+        }
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        // Set up the position attribute
+        const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        const positions = [];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+        // Function to update the star's position
+        function updateStarPosition(x, y) {
+            // Normalize the mouse coordinates
+            const normalizedX = (x / canvas.width) * 2 - 1;
+            const normalizedY = -((y / canvas.height) * 2 - 1);
+
+            // Update the star's position
+            positions.push(normalizedX, normalizedY);
+
+            // Limit the number of positions to create a trail effect
+            if (positions.length > 100) {
+                positions.shift();
+                positions.shift();
+            }
+
+            // Update the position buffer data
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        }
+
+        // Mousemove event listener
+        canvas.addEventListener('mousemove', (e) => {
+            updateStarPosition(e.clientX, e.clientY);
+        });
+
+        // Clear the canvas and draw
+        function draw() {
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.drawArrays(gl.POINTS, 0, positions.length/2 );
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+    <style>
+        body, html {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</body>
+</html>

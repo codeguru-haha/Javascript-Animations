@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Color Flow</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth/2;
+        canvas.height = window.innerHeight/2;
+
+        const colors = ['#FF5733', '#FFC300', '#DAF7A6', '#FF33FF', '#33FFEC'];
+
+        const particles = [];
+
+        function createParticle(x, y) {
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const particle = {
+                x,
+                y,
+                color,
+                radius: 3,
+                speed: 3,
+                velocityX: (Math.random() - 0.5) * 2,
+                velocityY: (Math.random() - 0.5) * 2,
+            };
+            particles.push(particle);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((particle, index) => {
+                particle.x += particle.velocityX;
+                particle.y += particle.velocityY;
+                particle.radius -= 0.02;
+
+                if (particle.radius > 0) {
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.fill();
+                    ctx.strokeStyle = particle.color;
+                    ctx.stroke();
+                }
+
+                if (particle.radius <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (event) => {
+            const { clientX, clientY } = event;
+            createParticle(clientX, clientY);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

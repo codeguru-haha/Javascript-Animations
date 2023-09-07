@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Text with Zoom</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div style="height: 500px; width: 500px;" id="div">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Initialize scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 300);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') });
+        renderer.setSize(500, 500);
+
+        // Create a font loader
+        const loader = new THREE.FontLoader();
+
+        // Load a font and create 3D text
+        loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+            const textGeometry = new THREE.TextGeometry('A', {
+                font: font,
+                size: 5,            // Text size
+                height: 2,        // Extrusion depth
+                curveSegments: 20,  // Number of segments for curves
+            });
+
+            // Create an array of materials with different colors for each face
+            const materials = [
+                new THREE.MeshBasicMaterial({ color: 0xff0000 }), // Red
+                new THREE.MeshBasicMaterial({ color: 0x00ff00 }), // Green
+                // new THREE.MeshBasicMaterial({ color: 0x0000ff }), // Blue
+                // new THREE.MeshBasicMaterial({ color: 0xffff00 }), // Yellow
+                // new THREE.MeshBasicMaterial({ color: 0xff00ff }), // Magenta
+                // new THREE.MeshBasicMaterial({ color: 0x00ffff }), // Cyan
+            ];
+
+            // Create a material with an array of materials
+            const textMaterial = new THREE.MeshFaceMaterial(materials);
+
+            const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+            scene.add(textMesh);
+
+            // Set the pivot point (rotation center)
+            const pivotPoint = new THREE.Object3D();
+            pivotPoint.add(textMesh);
+            scene.add(pivotPoint);
+
+            // Position the text within the pivot point
+            textMesh.position.set(-3 , 1,-3);
+
+            // Initialize rotation angles
+            let mouseX = 0;
+            let mouseY = 0;
+
+            //Add mousemove event listener to track mouse movement
+            document.getElementById("div").addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+            });
+
+            // Add wheel event listener to zoom in and out
+            document.getElementById("div").addEventListener('wheel', (event) => {
+                // Adjust the camera's position based on the wheel delta
+                camera.position.z += event.deltaY * 0.01;
+
+                // Limit the zoom range
+                camera.position.z = Math.min(Math.max(camera.position.z, 1), 20);
+            });
+
+            // Render the scene
+            animate();
+
+            // Rotate the text based on mouse movement
+            function animate() {
+                requestAnimationFrame(animate);
+
+                // Update the text rotation based on mouse movement
+                textMesh.rotation.x = mouseY * 2 ;
+                textMesh.rotation.y = mouseX * 2 ;
+
+                renderer.render(scene, camera);
+            }
+        });
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(newWidth, newHeight);
+        });
+
+        // Set initial camera position
+        camera.position.z = 5;
+    </script>
+</body>
+</html>
